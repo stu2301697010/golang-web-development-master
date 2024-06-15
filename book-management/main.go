@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/csv"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
 
+	"log"
+
 	"github.com/gin-gonic/gin"
-	"github.com/gocarina/gocsv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -58,20 +58,21 @@ func LoadCSVData(filename string) {
 	// Create a custom CSV reader with ';' as the delimiter
 	r := csv.NewReader(file)
 	r.Comma = ';'
+	r.LazyQuotes = true
 
-	var csvBooks []CSVBook
-
-	// Custom unmarshalling with the reader
-	if err := gocsv.UnmarshalCSV(r, &csvBooks); err != nil {
-		log.Fatalf("Failed to parse CSV file: %v", err)
+	// Read all records from CSV
+	records, err := r.ReadAll()
+	if err != nil {
+		log.Fatalf("Failed to read CSV file: %v", err)
 	}
 
-	for _, csvBook := range csvBooks {
+	for _, record := range records[1:] { // skip header row
+		year, _ := strconv.Atoi(record[3]) // convert year to integer
 		book := Book{
-			Title:  csvBook.Title,
-			ISBN:   csvBook.ISBN,
-			Author: csvBook.Author,
-			Year:   csvBook.YearOfPublication,
+			ISBN:   record[0],
+			Title:  record[1],
+			Author: record[2],
+			Year:   year,
 		}
 		DB.Create(&book)
 	}
@@ -160,6 +161,7 @@ func main() {
 
 	InitDB()
 
+	// Load sample data
 	LoadCSVData("books.csv")
 
 	r.GET("/books", getBooks)
