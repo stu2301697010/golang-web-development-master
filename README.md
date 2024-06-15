@@ -30,8 +30,8 @@ Each book in the collection has the following attributes:
 1. Clone the repository:
 
 ```bash
-git clone <repository-url>
-cd <repository-directory>
+git clone https://github.com/stu2301697010/golang-web-development-master.git
+cd golang-web-development-master/
 ```
 Build and run the application using Docker Compose:
 

@@ -27,13 +27,5 @@ services:
       DB_NAME: yourdb
       DB_PORT: "5432"
 
-  frontend:
-    build:
-      context: ./book-management-frontend
-    ports:
-      - "3000:3000"
-    depends_on:
-      - web
-
 volumes:
   db_data:
