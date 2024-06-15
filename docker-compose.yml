@@ -14,7 +14,8 @@ services:
       - db_data:/var/lib/postgresql/data
 
   web:
-    build: .
+    build:
+      context: ./book-management
     ports:
       - "8080:8080"
     depends_on:
@@ -25,6 +26,14 @@ services:
       DB_PASSWORD: yourpassword
       DB_NAME: yourdb
       DB_PORT: "5432"
+
+  frontend:
+    build:
+      context: ./book-management-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - web
 
 volumes:
   db_data:
