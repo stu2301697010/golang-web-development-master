@@ -7,6 +7,7 @@ services:
       POSTGRES_USER: youruser
       POSTGRES_PASSWORD: yourpassword
       POSTGRES_DB: yourdb
+      POSTGRES_PORT: "5432"
     ports:
       - "5432:5432"
     volumes:
@@ -23,6 +24,7 @@ services:
       DB_USER: youruser
       DB_PASSWORD: yourpassword
       DB_NAME: yourdb
+      DB_PORT: "5432"
 
 volumes:
   db_data:

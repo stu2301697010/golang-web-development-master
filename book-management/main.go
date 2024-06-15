@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/csv"
+	"log"
 	"net/http"
+	"os"
 	"strconv"
 
-	"log"
-
 	"github.com/gin-gonic/gin"
+	"github.com/gocarina/gocsv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -19,10 +21,23 @@ type Book struct {
 	Year   int    `json:"year"`
 }
 
+type CSVBook struct {
+	ISBN              string `csv:"ISBN"`
+	Title             string `csv:"Book-Title"`
+	Author            string `csv:"Book-Author"`
+	YearOfPublication int    `csv:"Year-Of-Publication"`
+}
+
 var DB *gorm.DB
 
 func InitDB() {
-	dsn := "host=db user=youruser password=yourpassword dbname=yourdb port=5432 sslmode=disable"
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	port := os.Getenv("DB_PORT")
+
+	dsn := "host=" + host + " user=" + user + " password=" + password + " dbname=" + dbname + " port=" + port + " sslmode=disable"
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
@@ -31,6 +46,35 @@ func InitDB() {
 
 	// Migrate the schema
 	DB.AutoMigrate(&Book{})
+}
+
+func LoadCSVData(filename string) {
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("Failed to open CSV file: %v", err)
+	}
+	defer file.Close()
+
+	// Create a custom CSV reader with ';' as the delimiter
+	r := csv.NewReader(file)
+	r.Comma = ';'
+
+	var csvBooks []CSVBook
+
+	// Custom unmarshalling with the reader
+	if err := gocsv.UnmarshalCSV(r, &csvBooks); err != nil {
+		log.Fatalf("Failed to parse CSV file: %v", err)
+	}
+
+	for _, csvBook := range csvBooks {
+		book := Book{
+			Title:  csvBook.Title,
+			ISBN:   csvBook.ISBN,
+			Author: csvBook.Author,
+			Year:   csvBook.YearOfPublication,
+		}
+		DB.Create(&book)
+	}
 }
 
 func getBooks(c *gin.Context) {
@@ -115,6 +159,8 @@ func main() {
 	r := gin.Default()
 
 	InitDB()
+
+	LoadCSVData("books.csv")
 
 	r.GET("/books", getBooks)
 	r.GET("/books/:id", getBook)
